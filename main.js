@@ -7,9 +7,9 @@ var Board = (function() {
 	function constructor(tableId) {
 		var table = document.getElementById(tableId);
 		for(var y=0; y<6; y++){
-			var row = table.insertRow();
+			var row = table.insertRow(y);
 			for(var x=0; x<7; x++) {
-				var cell = row.insertCell();
+				var cell = row.insertCell(x);
 				cell.id = x + "," + y;
 				cellIds.push(cell.id);
 				cell.appendChild(document.createElement('span'));
@@ -89,7 +89,7 @@ var Engine = (function() {
 			dropx = err;
 		}
 		if(typeof(dropx) !== 'number' || dropx < 0 || dropx >= xy.length) {
-			console.log('Player ' + (turn + 1) + ' returned an invalid response from makeMove. Turn skipped.');
+			console.log('Player ' + (turn) + ' returned an invalid response from makeMove. Turn skipped.');
 			console.log(dropx);
 			nextTurn();
 			return;
@@ -99,11 +99,10 @@ var Engine = (function() {
 			dropTo--;
 		}
 		if(dropTo < 0) {
-			console.log('Player ' + (turn +1) + ' tried to play in a full column. Turn skipped.');
+			console.log('Player ' + (turn) + ' tried to play in a full column. Turn skipped.');
 			nextTurn();
 			return;
 		}
-		
 		xy[dropx][dropTo] = turn;
 		boardUi.update(xyClone());
 		nextTurn();
@@ -181,9 +180,9 @@ var Engine = (function() {
 		for(var i=0; i<320; i++) {
 			(function() {
 				var c = i%2 + 1;
-				var x = Math.trunc(Math.random()*9);
-				var y = Math.trunc(Math.random()*9);
-				var to = Math.trunc(Math.random()*4000+i*50);
+				var x = Math.floor(Math.random()*9);
+				var y = Math.floor(Math.random()*9);
+				var to = Math.floor(Math.random()*4000+i*50);
 				console.log(to);
 				setTimeout(function() { xy[x][y] = c; boardUi.update(xyClone()); }, to);
 			})();
@@ -197,7 +196,7 @@ var randoPlayer = {
 	makeMove: function(xy) {
 		var x;
 		do{
-			x = Math.trunc(Math.random()*xy.length);
+			x = Math.floor(Math.random()*xy.length);
 		} while(xy[x][0]!==0);
 		return x;
 	}
@@ -212,17 +211,15 @@ var leftPlayer = {
 	}
 };
 
-var thomasBot = {
+var adamBot = {
 	makeMove: function(xy) {
 		for(var x=0; x<xy.length; x++) {
 			if(xy[x][0]==0) return x;
 		}
 		return 0;
 	}
-
 };
 
 var engine = new Engine();
-engine.newGame(leftPlayer, thomasBot);
-
-})();
+engine.newGame(randoPlayer, randoPlayer);
+)();
