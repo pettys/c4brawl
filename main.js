@@ -60,7 +60,7 @@ var Engine = (function() {
 	var boardUi;
 	var players = [];
 	var turn = 1;
-	var delay = 100;
+	var delay = 500;
 	
 	function constructor() {
 		initEmptyXy();
@@ -89,7 +89,7 @@ var Engine = (function() {
 			dropx = err;
 		}
 		if(typeof(dropx) !== 'number' || dropx < 0 || dropx >= xy.length) {
-			console.log('Player ' + (turn) + ' returned an invalid response from makeMove. Turn skipped.');
+			console.log('Player ' + turn + ' returned an invalid response from makeMove. Turn skipped.');
 			console.log(dropx);
 			nextTurn();
 			return;
@@ -99,7 +99,7 @@ var Engine = (function() {
 			dropTo--;
 		}
 		if(dropTo < 0) {
-			console.log('Player ' + (turn) + ' tried to play in a full column. Turn skipped.');
+			console.log('Player ' + turn + ' tried to play in a full column. Turn skipped.');
 			nextTurn();
 			return;
 		}
@@ -211,15 +211,19 @@ var leftPlayer = {
 	}
 };
 
-var adamBot = {
+var thomasBot = {
 	makeMove: function(xy) {
 		for(var x=0; x<xy.length; x++) {
-			if(xy[x][0]==0) return x;
+			if(xy[x][1]==0) return x;
+			if(xy[x][0]==0) return 0;
+			if(xy[x][5]==0) return 1;
+			if(xy[x][6]==0) return 2;
 		}
 		return 0;
 	}
 };
 
 var engine = new Engine();
-engine.newGame(randoPlayer, randoPlayer);
-)();
+engine.newGame(randoPlayer, thomasBot);
+
+})();
