@@ -73,12 +73,20 @@ var Engine = (function() {
 		initEmptyXy();
 		boardUi.update(xyClone());
 		players = [player1, player2];
-		players.forEach(function(p) {
+		players.forEach(function(p, idx) {
 			if(p.newGame) {
-				p.newGame();
+				p.newGame(idx+1);
 			}
 		});
 		setTimeout(takeTurn, delay);
+	}
+
+	constructor.prototype.setDelay = function(delayInput) {
+		if(typeof(delayInput) !== 'number' || isNaN(delayInput)) {
+			console.log('bad delay input');
+		} else {
+			delay = delayInput;
+		}
 	}
 	
 	function takeTurn() {
@@ -112,7 +120,11 @@ var Engine = (function() {
 		var result = getGameResultOrNull();
 		if(result !== null) {
 			players.forEach(function(p) { if(p.gameOver) p.gameOver(result, xyClone()); });
-			console.log('Winner: ' + result);
+			if(result === 0) {
+				console.log('Tie.');
+			} else {
+				console.log('Winner: ' + players[result-1].name + ' (' + (result==1?'Red':'Blue') + ')');
+			}
 			return;
 		}
 		turn = turn == 1 ? 2 : 1;
@@ -176,54 +188,63 @@ var Engine = (function() {
 		return xyc;
 	}
 	
-	function randoFill() {
-		for(var i=0; i<320; i++) {
-			(function() {
-				var c = i%2 + 1;
-				var x = Math.floor(Math.random()*9);
-				var y = Math.floor(Math.random()*9);
-				var to = Math.floor(Math.random()*4000+i*50);
-				console.log(to);
-				setTimeout(function() { xy[x][y] = c; boardUi.update(xyClone()); }, to);
-			})();
-		}
-	}
-	
 	return constructor;
 })();
 
-var randoPlayer = {
-	makeMove: function(xy) {
-		var x;
-		do{
-			x = Math.floor(Math.random()*xy.length);
-		} while(xy[x][0]!==0);
-		return x;
-	}
-};
+(function() {
+	
+	// Brawl Organizer.
+	var engine = new Engine();
+	var players = [];
+	
+	document.getElementById('delay').value = localStorage.getItem('delay') || '250';
 
-var leftPlayer = {
+	window.enterTheFray = function(player) {
+		if(typeof(player.name) !== 'string' || player.name.trim().length == 0) {
+			console.log('Someone tried to enter the fray without a name. Denied!');
+			return;
+		}
+		if(typeof(player.makeMove) !== 'function') {
+			console.log('Player "' + player.name + '" does not have a makeMove player and will probably lose badly as a result.');
+		}
+		players.push(player);
+		var opt1 = document.createElement('option');
+		opt1.value = players.length-1;
+		opt1.appendChild(document.createTextNode(player.name));
+		var opt2 = opt1.cloneNode(true);
+		opt1.selected = player.name == localStorage.getItem('p1');
+		opt2.selected = player.name == localStorage.getItem('p2');
+		document.getElementById('player-1-sel').appendChild(opt1);
+		document.getElementById('player-2-sel').appendChild(opt2);
+	}
+	
+	document.getElementById('fight').addEventListener('click', function() {
+		var p1 = document.getElementById('player-1-sel').value;
+		var p2 = document.getElementById('player-2-sel').value;
+		if(p1==='') { alert('Select a red player.'); return; }
+		if(p2==='') { alert('Select a blue player.'); return; }
+		
+		p1 = players[Number(p1)];
+		p2 = players[Number(p2)];
+		delay = document.getElementById('delay').value;
+		engine.setDelay(Number(delay));
+		engine.newGame(p1, p2);
+		localStorage.setItem('p1', p1.name);
+		localStorage.setItem('p2', p2.name);
+		localStorage.setItem('delay', delay);
+
+	});
+	
+})();
+
+enterTheFray({
+	name: 'LeftPlayer',
 	makeMove: function(xy) {
 		for(var x=0; x<xy.length; x++) {
 			if(xy[x][0]==0) return x;
 		}
 		return 0;
 	}
-};
-
-var thomasBot = {
-	makeMove: function(xy) {
-		for(var x=0; x<xy.length; x++) {
-			if(xy[x][1]==0) return x;
-			if(xy[x][0]==0) return 0;
-			if(xy[x][5]==0) return 1;
-			if(xy[x][6]==0) return 2;
-		}
-		return 0;
-	}
-};
-
-var engine = new Engine();
-engine.newGame(randoPlayer, thomasBot);
+});
 
 })();
