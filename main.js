@@ -1,9 +1,11 @@
 (function() {
 
 var Board = (function() {
-	
+
 	var cellIds = [];
-	
+
+	window.boardClickHandlers = [];
+
 	function constructor(tableId) {
 		var table = document.getElementById(tableId);
 		for(var y=0; y<6; y++){
@@ -13,9 +15,12 @@ var Board = (function() {
 				cell.id = x + "," + y;
 				cellIds.push(cell.id);
 				cell.appendChild(document.createElement('span'));
-				//cell.addEventListener('click', function(e) {
-				//	e.currentTarget.classList.toggle('red');			
-				//})
+				cell.addEventListener('click', function(e) {
+					var parts = e.currentTarget.id.split(',');
+					var evt = { x: Number(parts[0]), y: Number(parts[1]) };
+					console.log(evt);
+					window.boardClickHandlers.forEach(function(fn) { fn(evt); });
+				});
 			}
 		}
 	}
@@ -88,7 +93,7 @@ var Engine = (function() {
 			delay = delayInput;
 		}
 	}
-	
+
 	function takeTurn() {
 		var dropx;
 		try {
@@ -96,6 +101,15 @@ var Engine = (function() {
 		} catch(err) {
 			dropx = err;
 		}
+
+		if(dropx && typeof(dropx.then) === 'function') {
+			dropx.then(executeTurn);
+		} else {
+			executeTurn(dropx);
+		}
+	}
+
+	function executeTurn(dropx) {
 		if(typeof(dropx) !== 'number' || dropx < 0 || dropx >= xy.length) {
 			console.log('Player ' + turn + ' returned an invalid response from makeMove. Turn skipped.');
 			console.log(dropx);
@@ -130,7 +144,7 @@ var Engine = (function() {
 		turn = turn == 1 ? 2 : 1;
 		setTimeout(takeTurn, delay);
 	}
-	
+
 	function getGameResultOrNull() {
 		for(var x=0;x<xy.length;x++){
 			for(var y=0;y<xy[x].length;y++){
@@ -148,7 +162,7 @@ var Engine = (function() {
 			|| winnerAtLine(x,y,1,1)
 			|| winnerAtLine(x,y,0,1);
 	}
-	
+
 	function winnerAtLine(x,y,dx,dy){
 		var first = xy[x][y];
 		if(first===0) return 0;
