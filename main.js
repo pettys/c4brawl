@@ -6,6 +6,13 @@ var Board = (function() {
 
 	window.boardClickHandlers = [];
 
+	function onCellClicked(e) {
+		var parts = e.currentTarget.id.split(',');
+		var evt = { x: Number(parts[0]), y: Number(parts[1]) };
+		console.log(evt);
+		window.boardClickHandlers.forEach(function(fn) { fn(evt); });
+	}
+
 	function constructor(tableId) {
 		var table = document.getElementById(tableId);
 		for(var y=0; y<6; y++){
@@ -15,12 +22,7 @@ var Board = (function() {
 				cell.id = x + "," + y;
 				cellIds.push(cell.id);
 				cell.appendChild(document.createElement('span'));
-				cell.addEventListener('click', function(e) {
-					var parts = e.currentTarget.id.split(',');
-					var evt = { x: Number(parts[0]), y: Number(parts[1]) };
-					console.log(evt);
-					window.boardClickHandlers.forEach(function(fn) { fn(evt); });
-				});
+				cell.addEventListener('click', onCellClicked);
 			}
 		}
 	}
