@@ -1,8 +1,13 @@
 (function() {
 
+	var me;
+	var not_me;
+
 	// Called when a new game starts.
 	// yourNumber = 1 if you are Red, 2 if you are Blue.
 	function newGame(yourNumber) {
+		me = yourNumber;
+		not_me = me == 1 ? 2 : 1;
 	}
 
 	// Called when it's your turn to make a move.
@@ -14,10 +19,6 @@
 	// RIGHT-MOST is xy.length-1
 	// 0,0 is upper left
 	function makeMove(xy) {
-		//YourNumber doesn't work?
-		// This only works if I am player 2
-		var not_me = 1;
-		var me = not_me == 1 ? 2 : 1;
 		//xy.length = 7
 
 		// play defense in y-dir
