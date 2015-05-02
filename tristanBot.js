@@ -12,14 +12,57 @@
 	// drop into.
 	// LEFT-MOST is 0
 	// RIGHT-MOST is xy.length-1
+	// 0,0 is upper left
 	function makeMove(xy) {
-		// This guy just keeps picking a random column
-		// until he finds a column that isn't full.
-		var x;
-		do{
-			x = Math.floor(Math.random()*xy.length);
-		} while(xy[x][0]!==0);
-		return x;
+		//YourNumber doesn't work?
+		// This only works if I am player 2
+		var not_me = 1;
+		var me = not_me == 1 ? 2 : 1;
+		//xy.length = 7
+
+		// play defense in y-dir
+		var col_cnt;
+		for(var x=0; x<xy.length; x++) {
+		      col_cnt = 0;
+		      for(var y=xy.length-2; y>0; y--) {
+                        if(xy[x][y] == not_me){
+			  col_cnt++;
+			}
+			else {
+			  col_cnt = 0;
+			}
+			if(col_cnt == 3 && xy[x][y-1] != me){
+			  return x;
+			}
+		      }
+		}
+
+		// play defense in x-dir
+		row_cnt = 0;
+	        for(var y=xy.length-2; y>0; y--) {
+	          for(var x=0; x<xy.length; x++) {
+		      row_cnt = 0;
+                        if(xy[x][y] == not_me){
+			  row_cnt++;
+			}
+			else {
+			  row_cnt = 0;
+			}
+			if(row_cnt == 3 && xy[x+1][y] != me){
+			  return x;
+			}
+		      }
+		}
+
+		//no immediate defense needed
+		//play right-most
+		for(var x=xy.length-1; x>0; x--) {
+		  for(var y=xy.length-2; y>0; y--) {
+		    if(xy[x][y] == 0){
+	              return x;
+		    }
+		  }
+                }
 	}
 
 	enterTheFray({
