@@ -1,6 +1,8 @@
+/// <reference path="boardFunctions.js" />
+
 (function() {
 
-var Board = (function() {
+var BoardUi = (function() {
 
 	var cellIds = [];
 
@@ -50,11 +52,6 @@ var Board = (function() {
 				}
 			}
 		}
-		for(var i=0;i<cellIds.length;i++){
-			var td = document.getElementById(cellIds[i]);
-			if(td){
-			}
-		}
 	}
 
 	return constructor;
@@ -68,17 +65,18 @@ var Engine = (function() {
 	var players = [];
 	var turn = 1;
 	var delay = 500;
+	var board = boardFunctions;
 	
 	function constructor() {
-		initEmptyXy();
-		boardUi = new Board('board');
-		boardUi.update(xyClone());
+		xy = board.initEmptyXy();
+		boardUi = new BoardUi('board');
+		boardUi.update(board.clone(xy));
 	}
 	
 	constructor.prototype.newGame = function(player1, player2) {
 		turn = 1;
-		initEmptyXy();
-		boardUi.update(xyClone());
+		xy = board.initEmptyXy();
+		boardUi.update(board.clone(xy));
 		players = [player1, player2];
 		players.forEach(function(p, idx) {
 			if(p.newGame) {
@@ -99,7 +97,7 @@ var Engine = (function() {
 	function takeTurn() {
 		var dropx;
 		try {
-			dropx = players[turn-1].makeMove(xyClone());
+			dropx = players[turn-1].makeMove(board.clone(xy));
 		} catch(err) {
 			dropx = err;
 		}
@@ -112,30 +110,23 @@ var Engine = (function() {
 	}
 
 	function executeTurn(dropx) {
-		if(typeof(dropx) !== 'number' || dropx < 0 || dropx >= xy.length) {
-			console.log('Player ' + turn + ' returned an invalid response from makeMove. Turn skipped.');
+		var error = board.dropIn(xy, turn, dropx);
+		if(error) {
+			console.log('Player ' + turn + ' skipped because of illegal move: ' + error + '.');
 			console.log(dropx);
 			nextTurn();
 			return;
 		}
-		var dropTo = xy[dropx].length-1;
-		while(dropTo >= 0 && xy[dropx][dropTo] !== 0) {
-			dropTo--;
-		}
-		if(dropTo < 0) {
-			console.log('Player ' + turn + ' tried to play in a full column. Turn skipped.');
-			nextTurn();
-			return;
-		}
-		xy[dropx][dropTo] = turn;
-		boardUi.update(xyClone());
+		boardUi.update(board.clone(xy));
 		nextTurn();
 	}
 	
 	function nextTurn() {
-		var result = getGameResultOrNull();
+		var result = board.getGameResultOrNull(xy);
 		if(result !== null) {
-			players.forEach(function(p) { if(p.gameOver) p.gameOver(result, xyClone()); });
+			players.forEach(function(p) {
+				if(p.gameOver) p.gameOver(result, board.clone(xy));
+			});
 			if(result === 0) {
 				console.log('Tie.');
 			} else {
@@ -145,63 +136,6 @@ var Engine = (function() {
 		}
 		turn = turn == 1 ? 2 : 1;
 		setTimeout(takeTurn, delay);
-	}
-
-	function getGameResultOrNull() {
-		for(var x=0;x<xy.length;x++){
-			for(var y=0;y<xy[x].length;y++){
-				var winner = winnerAt(x,y);
-				if(winner) return winner;
-			}
-		}
-		var boardFull = xy.every(function(col) { return col[0] !== 0; });
-		return boardFull ? 0 : null;
-	}
-	
-	function winnerAt(x,y){
-		return winnerAtLine(x,y,1,-1)
-			|| winnerAtLine(x,y,1,0)
-			|| winnerAtLine(x,y,1,1)
-			|| winnerAtLine(x,y,0,1);
-	}
-
-	function winnerAtLine(x,y,dx,dy){
-		var first = xy[x][y];
-		if(first===0) return 0;
-		for(var i=0;i<3;i++){
-			x+=dx;
-			y+=dy;
-			if(x<0||y<0) return 0;
-			if(x >= xy.length || y >= xy[x].length) return 0;
-			if(first !== xy[x][y]) return 0;
-		}
-		return first;
-	}
-	
-	function initEmptyXy() {
-		xy=[];
-		for(var x=0;x<7;x++){
-			var col = [];
-			for(var y=0;y<6;y++){
-				col.push(0);
-			}
-			xy.push(col)
-		}
-	}
-	
-	// Create a clone of 'xy' to pass to other components.
-	// That way if they trash their xy it doesn't affect
-	// the game.
-	function xyClone() {
-		xyc=[];
-		for(var x=0;x<xy.length;x++){
-			var col = [];
-			for(var y=0;y<xy[x].length;y++){
-				col.push(xy[x][y]);
-			}
-			xyc.push(col)
-		}
-		return xyc;
 	}
 	
 	return constructor;
@@ -225,14 +159,14 @@ var Engine = (function() {
 		}
 		players.push(player);
 		var opt1 = document.createElement('option');
-		opt1.value = players.length-1;
+		opt1.value = (players.length-1).toString();
 		opt1.appendChild(document.createTextNode(player.name));
 		var opt2 = opt1.cloneNode(true);
 		opt1.selected = player.name == localStorage.getItem('p1');
 		opt2.selected = player.name == localStorage.getItem('p2');
 		document.getElementById('player-1-sel').appendChild(opt1);
 		document.getElementById('player-2-sel').appendChild(opt2);
-	}
+	};
 	
 	document.getElementById('fight').addEventListener('click', function() {
 		var p1 = document.getElementById('player-1-sel').value;
@@ -242,7 +176,7 @@ var Engine = (function() {
 		
 		p1 = players[Number(p1)];
 		p2 = players[Number(p2)];
-		delay = document.getElementById('delay').value;
+		var delay = document.getElementById('delay').value;
 		engine.setDelay(Number(delay));
 		engine.newGame(p1, p2);
 		localStorage.setItem('p1', p1.name);

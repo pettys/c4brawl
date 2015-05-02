@@ -1,3 +1,6 @@
+/// <reference path="boardFunctions.js" />
+/// <reference path="main.js" />
+
 (function() {
 
 	// Called when a new game starts.
