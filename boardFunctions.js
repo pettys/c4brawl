@@ -2,6 +2,17 @@
 
 var boardFunctions = {
 
+	whoseTurnIsIt: function(xy) {
+		var red = 0, blue = 0;
+		for(var x=0;x<xy.length;x++){
+			for(var y=0;y<xy[x].length;y++){
+				if(xy[x][y] == 1) red++;
+				else if(xy[x][y] == 1) blue++;
+			}
+		}
+		return red==blue ? 1 : 2;
+	},
+
 	// Modifies the xy board so that 'player' (1 or 2)
 	// has dropped a token into column 'dropx' (0-xy.length-1).
 	// Calculates for you how far the token falls.
